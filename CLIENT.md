@@ -13,6 +13,7 @@ Aplicacao web educativa para criancas aprenderem logica e programacao atraves de
 - Implementar as interacoes de jogo: sequencias/padroes e labirintos; comandos de movimento; condicoes; repeticoes; organizacao de blocos; e, por fim, uma introducao a codigo JavaScript.
 - Mostrar XP, estrelas, niveis concluidos, medalhas e percentagem de progresso devolvidos pela API.
 - Comunicar com o Server para autenticacao, catalogo de niveis e registo/consulta de progresso. O Client nao acede diretamente a SQLite.
+- Permitir criar conta, iniciar sessao e consultar a identidade do jogador autenticado; enviar o token Bearer nas chamadas protegidas.
 - Ser mobile-first e responsivo em computadores, tablets e telemoveis.
 
 ## Estrutura pedagogica prevista
@@ -70,4 +71,6 @@ npm install
 npm run dev
 ```
 
-`npm run build` valida os tipos TypeScript e cria a versao de producao. A pagina inicial atual e a fundacao visual/navegacional; autenticacao, estado real do jogador e desafios serao implementados nas etapas seguintes.
+Copiar `.env.example` para `.env.local` para configurar `VITE_API_BASE_URL` quando a API nao estiver em `http://localhost:8000/api/v1`. O token de sessao fica guardado apenas no `sessionStorage` do separador e e removido ao terminar sessao ou quando a API indicar que expirou.
+
+`npm run build` valida os tipos TypeScript e cria a versao de producao. Registo, login e consulta de sessao usam os endpoints documentados em `SERVER.md`; dashboard com progresso e desafios serao implementados nas etapas seguintes.

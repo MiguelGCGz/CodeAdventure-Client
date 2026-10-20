@@ -101,6 +101,27 @@ h2 { margin-bottom: 0; font-size: clamp(29px, 3.2vw, 39px); letter-spacing: -.7p
 .world-card h3 { max-width: 190px; margin: 24px 0 0; font-size: 17px; letter-spacing: -.2px; }
 .world-arrow { position: absolute; right: 18px; bottom: 17px; color: #77718f; font-size: 17px; }
 
+.auth-section { padding: 68px 20px; background: #fff; }
+.auth-card { width: min(100%, 460px); margin: auto; padding: 34px; border: 1px solid #ece8f6; border-radius: 22px; background: #fffdfa; box-shadow: 0 14px 40px #29284b0b; }
+.auth-card > .eyebrow { margin-bottom: 9px; }
+.auth-card h2 { margin-bottom: 9px; font-size: 31px; }
+.auth-intro, .signed-in-card > p:not(.eyebrow) { margin-bottom: 22px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 22px; padding: 4px; border-radius: 12px; background: #f3f0fa; }
+.auth-tabs button { padding: 10px; border: 0; border-radius: 9px; background: transparent; color: #77738c; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.auth-tabs button.active { background: #fff; box-shadow: 0 2px 8px #29284b10; color: var(--purple); }
+.auth-form { display: flex; flex-direction: column; }
+.auth-form label { margin: 0 0 7px; color: #494761; font-size: 11px; font-weight: 700; }
+.auth-form input { width: 100%; margin-bottom: 16px; padding: 12px 13px; border: 1px solid #e5e1ef; border-radius: 10px; background: #fff; color: var(--ink); font: inherit; font-size: 13px; }
+.auth-form input:focus { border-color: #8978e0; outline: 3px solid #6b55d922; }
+.auth-error { margin: -2px 0 14px; color: #b43f49; font-size: 12px; line-height: 1.6; }
+.auth-submit { justify-content: center; width: 100%; border: 0; font: inherit; cursor: pointer; }
+.auth-submit:disabled { cursor: wait; opacity: .7; }
+.auth-hint { margin: 13px 0 0; color: #8c8ba0; font-size: 10px; text-align: center; }
+.signed-in-card { text-align: center; }
+.signed-in-card .eyebrow { margin-top: 14px; }
+.auth-mascot { font-size: 48px; }
+.secondary-button { padding: 12px 17px; border: 1px solid #e5e1ef; border-radius: 11px; background: #fff; color: var(--purple); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+
 .how-section { width: min(1160px, calc(100% - 64px)); min-height: 190px; margin: 64px auto; padding: 30px 38px; display: flex; align-items: center; gap: 24px; border-radius: 22px; background: #f2efff; }
 .how-icon { width: 68px; height: 68px; flex: 0 0 68px; display: grid; place-items: center; border-radius: 20px; background: #fff; font-size: 34px; }
 .how-section .eyebrow { margin-bottom: 7px; }
@@ -127,6 +148,8 @@ footer p { margin: 0; color: #89889b; font-size: 11px; }
   .hero-art::before { width: 220px; height: 220px; }
   .robot { transform: scale(.83); }
   .worlds-section { padding: 52px 20px 60px; }
+  .auth-section { padding: 48px 20px; }
+  .auth-card { padding: 27px 22px; }
   .section-heading { align-items: start; flex-direction: column; gap: 12px; }
   .world-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .world-card { min-height: 145px; padding: 15px; }
