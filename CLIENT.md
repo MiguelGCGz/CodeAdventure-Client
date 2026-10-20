@@ -60,3 +60,14 @@ Ranking, modo professor, graficos/analitica avancada, sons e animacoes adicionai
 - Estados de carregamento, sucesso e erro visiveis; nao esconder falhas da API.
 - Layout utilizavel em ecras pequenos, sem depender de Bootstrap.
 - Testes para fluxos e interacoes importantes, conforme a estrutura de testes adotada.
+
+## Desenvolvimento local
+
+Requer Node.js e npm. Na pasta deste repositorio:
+
+```bash
+npm install
+npm run dev
+```
+
+`npm run build` valida os tipos TypeScript e cria a versao de producao. A pagina inicial atual e a fundacao visual/navegacional; autenticacao, estado real do jogador e desafios serao implementados nas etapas seguintes.
