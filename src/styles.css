@@ -100,6 +100,29 @@ h2 { margin-bottom: 0; font-size: clamp(29px, 3.2vw, 39px); letter-spacing: -.7p
 .world-icon { position: absolute; top: 17px; right: 18px; font-size: 29px; }
 .world-card h3 { max-width: 190px; margin: 24px 0 0; font-size: 17px; letter-spacing: -.2px; }
 .world-arrow { position: absolute; right: 18px; bottom: 17px; color: #77718f; font-size: 17px; }
+.world-card-available, .world-card-completed, .world-card-locked { min-height: 205px; }
+.world-card-locked { filter: saturate(.72); }
+.world-status { display: inline-flex; align-items: center; gap: 5px; margin-top: 13px; padding: 5px 8px; border-radius: 20px; background: #ffffffa8; color: #625c80; font-size: 9px; font-weight: 700; }
+.status-available { color: #267553; }
+.status-completed { color: #5942bd; }
+.status-locked { color: #77738c; }
+.world-card-available h3, .world-card-completed h3, .world-card-locked h3 { margin-top: 10px; }
+.world-description, .world-level { max-width: 230px; margin: 7px 0 0; color: #6d6a80; font-size: 10px; line-height: 1.55; }
+.world-level { color: #514c6d; font-weight: 600; }
+
+.dashboard-section { padding: 40px max(32px, calc((100% - 1160px) / 2)) 50px; background: #f2efff; }
+.dashboard-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+.dashboard-heading .eyebrow { margin-bottom: 8px; }
+.dashboard-heading h2 { font-size: 32px; }
+.dashboard-intro { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.stat-card { min-height: 125px; padding: 17px; border: 1px solid #ece8f6; border-radius: 16px; background: #fff; }
+.stat-card > span { font-size: 21px; }
+.stat-card p { margin: 11px 0 4px; color: #77738c; font-size: 10px; }
+.stat-card strong { color: #35324f; font: 700 24px "Trebuchet MS", system-ui, sans-serif; }
+.stat-card strong small { color: #77738c; font: 600 11px system-ui, sans-serif; }
+.dashboard-error { margin: 0 0 15px; color: #b43f49; font-size: 12px; }
+.dashboard-loading { margin: 13px 0 0; color: #77738c; font-size: 11px; }
 
 .auth-section { padding: 68px 20px; background: #fff; }
 .auth-card { width: min(100%, 460px); margin: auto; padding: 34px; border: 1px solid #ece8f6; border-radius: 22px; background: #fffdfa; box-shadow: 0 14px 40px #29284b0b; }
@@ -118,6 +141,7 @@ h2 { margin-bottom: 0; font-size: clamp(29px, 3.2vw, 39px); letter-spacing: -.7p
 .auth-submit:disabled { cursor: wait; opacity: .7; }
 .auth-hint { margin: 13px 0 0; color: #8c8ba0; font-size: 10px; text-align: center; }
 .signed-in-card { text-align: center; }
+.signed-in-card strong { color: #5145a0; }
 .signed-in-card .eyebrow { margin-top: 14px; }
 .auth-mascot { font-size: 48px; }
 .secondary-button { padding: 12px 17px; border: 1px solid #e5e1ef; border-radius: 11px; background: #fff; color: var(--purple); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
@@ -148,6 +172,9 @@ footer p { margin: 0; color: #89889b; font-size: 11px; }
   .hero-art::before { width: 220px; height: 220px; }
   .robot { transform: scale(.83); }
   .worlds-section { padding: 52px 20px 60px; }
+  .dashboard-section { padding: 32px 20px 38px; }
+  .dashboard-heading { align-items: start; flex-direction: column; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .auth-section { padding: 48px 20px; }
   .auth-card { padding: 27px 22px; }
   .section-heading { align-items: start; flex-direction: column; gap: 12px; }
@@ -169,6 +196,7 @@ footer p { margin: 0; color: #89889b; font-size: 11px; }
   .hero-art { height: 285px; }
   .world-grid { grid-template-columns: 1fr; }
   .world-card { min-height: 124px; }
+  .world-card-available, .world-card-completed, .world-card-locked { min-height: 195px; }
   .world-card h3 { margin-top: 19px; }
   footer { align-items: start; flex-direction: column; justify-content: center; gap: 10px; padding: 18px 0; }
 }

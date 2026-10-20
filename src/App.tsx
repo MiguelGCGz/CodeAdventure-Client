@@ -1,5 +1,14 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { authenticate, clearSession, getCurrentPlayer, type Player } from "./api";
+import {
+  authenticate,
+  clearSession,
+  getCurrentPlayer,
+  getPlayerDashboard,
+  isUnauthorizedError,
+  type DashboardWorld,
+  type Player,
+  type PlayerDashboard,
+} from "./api";
 
 const worlds = [
   { number: "01", title: "Pensamento lógico", icon: "🧩", color: "peach" },
@@ -15,6 +24,9 @@ function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [player, setPlayer] = useState<Player | null>(null);
+  const [dashboard, setDashboard] = useState<PlayerDashboard | null>(null);
+  const [dashboardError, setDashboardError] = useState("");
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
   const [authError, setAuthError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
@@ -35,6 +47,42 @@ function App() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!player) {
+      setDashboard(null);
+      setDashboardError("");
+      return;
+    }
+    let active = true;
+    setIsLoadingDashboard(true);
+    setDashboardError("");
+    getPlayerDashboard()
+      .then((result) => {
+        if (active) setDashboard(result);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        if (isUnauthorizedError(error)) {
+          clearSession();
+          setPlayer(null);
+          setAuthMode("login");
+          setAuthError("A sessão expirou. Inicia sessão novamente.");
+          return;
+        }
+        setDashboardError(
+          error instanceof Error
+            ? error.message
+            : "Não foi possível carregar o teu progresso.",
+        );
+      })
+      .finally(() => {
+        if (active) setIsLoadingDashboard(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [player]);
 
   async function handleAuthSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,10 +118,22 @@ function App() {
           <span>Code<span className="brand-accent">Adventure</span></span>
         </a>
         <nav aria-label="Navegação principal">
-          <a href="#mundos">A aventura</a>
-          <a href="#como-funciona">Como funciona</a>
+          {player ? (
+            <>
+              <a href="#dashboard">O meu progresso</a>
+              <a href="#mundos">Mundos</a>
+              <a href="#perfil">O meu perfil</a>
+            </>
+          ) : (
+            <>
+              <a href="#mundos">A aventura</a>
+              <a href="#como-funciona">Como funciona</a>
+            </>
+          )}
         </nav>
-        <a className="header-cta" href="#auth">Vamos começar <span aria-hidden="true">→</span></a>
+        <a className="header-cta" href={player ? "#dashboard" : "#auth"}>
+          {player ? "Continuar aventura" : "Vamos começar"} <span aria-hidden="true">→</span>
+        </a>
       </header>
 
       <main>
@@ -108,6 +168,43 @@ function App() {
           </div>
         </section>
 
+        {player && (
+          <section className="dashboard-section" id="dashboard">
+            <div className="dashboard-heading">
+              <div>
+                <p className="eyebrow">O TEU ESPAÇO DE AVENTURA</p>
+                <h2>Olá, <span>{player.username}!</span></h2>
+                <p className="dashboard-intro">Pronto para descobrir algo novo hoje?</p>
+              </div>
+              <a className="text-link" href="#mundos">Ver mapa de mundos <span aria-hidden="true">→</span></a>
+            </div>
+            {dashboardError && <p className="dashboard-error" role="alert">{dashboardError}</p>}
+            <div className="stats-grid" aria-live="polite">
+              <article className="stat-card stat-xp">
+                <span aria-hidden="true">⭐</span>
+                <p>Experiência</p>
+                <strong>{dashboard?.total_xp ?? "—"} <small>XP</small></strong>
+              </article>
+              <article className="stat-card stat-levels">
+                <span aria-hidden="true">🧩</span>
+                <p>Desafios concluídos</p>
+                <strong>{dashboard ? `${dashboard.completed_levels}/${dashboard.total_levels}` : "—"}</strong>
+              </article>
+              <article className="stat-card stat-progress">
+                <span aria-hidden="true">🚀</span>
+                <p>Progresso da aventura</p>
+                <strong>{dashboard ? `${dashboard.progress_percentage}%` : "—"}</strong>
+              </article>
+              <article className="stat-card stat-worlds">
+                <span aria-hidden="true">🌍</span>
+                <p>Mundos disponíveis</p>
+                <strong>{dashboard ? dashboard.worlds.filter((world) => world.status !== "locked").length : "—"}<small> / {dashboard?.worlds.length ?? 6}</small></strong>
+              </article>
+            </div>
+            {isLoadingDashboard && <p className="dashboard-loading" role="status">A carregar o teu progresso...</p>}
+          </section>
+        )}
+
         <section className="worlds-section" id="mundos">
           <div className="section-heading">
             <div>
@@ -117,24 +214,30 @@ function App() {
             <p>Cada mundo ensina uma nova forma de pensar.<br className="desktop-break" /> A aventura começa com lógica e cresce contigo.</p>
           </div>
           <div className="world-grid">
-            {worlds.map((world) => (
-              <article className={`world-card ${world.color}`} key={world.number}>
-                <span className="world-number">MUNDO {world.number}</span>
-                <span className="world-icon" aria-hidden="true">{world.icon}</span>
-                <h3>{world.title}</h3>
-                <span className="world-arrow" aria-hidden="true">↗</span>
-              </article>
-            ))}
+            {player && dashboard
+              ? dashboard.worlds.map((world) => <WorldCard key={world.id} world={world} />)
+              : worlds.map((world) => (
+                <article className={`world-card ${world.color}`} key={world.number}>
+                  <span className="world-number">MUNDO {world.number}</span>
+                  <span className="world-icon" aria-hidden="true">{world.icon}</span>
+                  <h3>{world.title}</h3>
+                  <span className="world-arrow" aria-hidden="true">↗</span>
+                </article>
+              ))}
           </div>
         </section>
 
         <section className="auth-section" id="auth">
           {player ? (
-            <div className="auth-card signed-in-card">
+            <div className="auth-card signed-in-card" id="perfil">
               <span className="auth-mascot" aria-hidden="true">🎉</span>
-              <p className="eyebrow">BEM-VINDO À AVENTURA</p>
+              <p className="eyebrow">O TEU PERFIL</p>
               <h2>Olá, <span>{player.username}!</span></h2>
-              <p>A tua conta está pronta. Em breve poderás continuar a aventura e guardar o teu progresso.</p>
+              <p>
+                Já conquistaste <strong>{dashboard?.total_xp ?? "—"} XP</strong> e concluíste{" "}
+                <strong>{dashboard?.completed_levels ?? "—"} desafios</strong>.
+                Continua a aventura para desbloquear novos mundos e medalhas.
+              </p>
               <button className="secondary-button" type="button" onClick={handleLogout}>Terminar sessão</button>
             </div>
           ) : (
@@ -215,6 +318,33 @@ function App() {
         <p>Feito para mentes curiosas e grandes aventuras.</p>
       </footer>
     </>
+  );
+}
+
+function WorldCard({ world }: { world: DashboardWorld }) {
+  const firstLevel = world.levels[0];
+  const statusLabel = {
+    available: "Disponível",
+    completed: "Concluído",
+    locked: "Bloqueado",
+  }[world.status];
+
+  return (
+    <article className={`world-card ${world.theme_color} world-card-${world.status}`}>
+      <span className="world-number">MUNDO {String(world.id).padStart(2, "0")}</span>
+      <span className="world-icon" aria-hidden="true">{world.icon}</span>
+      <span className={`world-status status-${world.status}`}>
+        {world.status === "locked" ? "🔒" : world.status === "completed" ? "✓" : "→"} {statusLabel}
+      </span>
+      <h3>{world.title}</h3>
+      <p className="world-description">{world.description}</p>
+      {firstLevel && (
+        <p className="world-level">
+          {world.completed_levels}/{world.total_levels} desafios
+          {world.status === "available" && ` · ${firstLevel.title}`}
+        </p>
+      )}
+    </article>
   );
 }
 

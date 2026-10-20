@@ -3,6 +3,36 @@ export interface Player {
   username: string;
 }
 
+export interface DashboardLevel {
+  id: number;
+  title: string;
+  objective: string;
+  xp_reward: number;
+  status: "available" | "locked" | "completed";
+  stars: number | null;
+}
+
+export interface DashboardWorld {
+  id: number;
+  title: string;
+  description: string;
+  icon: string;
+  theme_color: string;
+  status: "available" | "locked" | "completed";
+  completed_levels: number;
+  total_levels: number;
+  levels: DashboardLevel[];
+}
+
+export interface PlayerDashboard {
+  player: Player;
+  total_xp: number;
+  completed_levels: number;
+  total_levels: number;
+  progress_percentage: number;
+  worlds: DashboardWorld[];
+}
+
 interface AuthResponse {
   access_token: string;
   token_type: string;
@@ -85,6 +115,25 @@ export async function getCurrentPlayer(): Promise<Player | null> {
     }
     throw error;
   }
+}
+
+export async function getPlayerDashboard(): Promise<PlayerDashboard> {
+  try {
+    return await request<PlayerDashboard>("/users/me/dashboard", {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem(tokenStorageKey) ?? ""}`,
+      },
+    });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      sessionStorage.removeItem(tokenStorageKey);
+    }
+    throw error;
+  }
+}
+
+export function isUnauthorizedError(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 401;
 }
 
 export function clearSession(): void {
