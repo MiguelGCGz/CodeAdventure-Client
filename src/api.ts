@@ -65,6 +65,7 @@ export type LevelChallenge =
         walls: [number, number][];
         max_commands: number;
         optimal_commands: number;
+        difficulty: number;
       };
       completed: boolean;
       stars: number | null;

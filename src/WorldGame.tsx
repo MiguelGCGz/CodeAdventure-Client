@@ -62,7 +62,10 @@ function VictoryEffect() {
     const timeout = window.setTimeout(() => {
       confetti({ ...options, particleCount: 120, spread: 105, origin: { x: 0.5, y: 0.55 } });
     }, 380);
-    return () => window.clearTimeout(timeout);
+    return () => {
+      window.clearTimeout(timeout);
+      confetti.reset();
+    };
   }, []);
 
   return (
@@ -205,6 +208,7 @@ function WorldGame({
     ];
     return (
       <div className="path-game">
+        <span className="challenge-difficulty">Dificuldade {challenge.challenge.difficulty}/5</span>
         <p className="game-prompt">Guia o explorador até à estrela sem tocar nas pedras.</p>
         <div
           aria-label={`Labirinto: robô na linha ${robotRow + 1}, coluna ${robotColumn + 1}`}
@@ -298,6 +302,8 @@ function WorldGame({
   }
 
   const selectedLevel = world.levels.find((level) => level.id === selectedLevelId);
+  const selectedLevelIndex = world.levels.findIndex((level) => level.id === selectedLevelId);
+  const nextLevel = selectedLevelIndex >= 0 ? world.levels[selectedLevelIndex + 1] : undefined;
 
   return (
     <section className="world-detail" aria-labelledby="world-detail-title">
@@ -386,6 +392,15 @@ function WorldGame({
                         {result.xp_awarded > 0 && <span className="reward-xp">+{result.xp_awarded} XP</span>}
                         {result.already_completed && " · Resultado já guardado"}
                       </p>
+                      {nextLevel && nextLevel.status !== "locked" && nextLevel.challenge_type !== "coming_soon" && (
+                        <button
+                          className="primary-button next-challenge-button"
+                          onClick={() => setSelectedLevelId(nextLevel.id)}
+                          type="button"
+                        >
+                          Próximo desafio: {nextLevel.title} <span aria-hidden="true">→</span>
+                        </button>
+                      )}
                       {world.status === "completed" && nextWorld && (
                         <button
                           className="primary-button next-world-button"
