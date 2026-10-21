@@ -1,5 +1,5 @@
 import confetti from "canvas-confetti";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   getLevelChallenge,
   submitLevelAnswer,
@@ -47,27 +47,6 @@ function errorMessage(error: unknown): string {
 }
 
 function VictoryEffect() {
-  useEffect(() => {
-    const options = {
-      particleCount: 95,
-      spread: 78,
-      startVelocity: 48,
-      gravity: 0.9,
-      ticks: 180,
-      disableForReducedMotion: true,
-      colors: ["#6b55d9", "#ffbd59", "#ff7e84", "#61cda3", "#78b8fa"],
-    };
-    confetti({ ...options, origin: { x: 0.12, y: 0.68 } });
-    confetti({ ...options, origin: { x: 0.88, y: 0.68 } });
-    const timeout = window.setTimeout(() => {
-      confetti({ ...options, particleCount: 120, spread: 105, origin: { x: 0.5, y: 0.55 } });
-    }, 380);
-    return () => {
-      window.clearTimeout(timeout);
-      confetti.reset();
-    };
-  }, []);
-
   return (
     <div aria-hidden="true" className="victory-decoration">
       <span className="victory-rocket rocket-left">🚀</span>
@@ -96,6 +75,7 @@ function WorldGame({
   const [result, setResult] = useState<LevelSubmissionResult | null>(null);
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const victoryConfettiTimeout = useRef<number | null>(null);
 
   useEffect(() => {
     if (selectedLevelId === null) return;
@@ -119,6 +99,10 @@ function WorldGame({
       });
     return () => {
       active = false;
+      if (victoryConfettiTimeout.current !== null) {
+        window.clearTimeout(victoryConfettiTimeout.current);
+        victoryConfettiTimeout.current = null;
+      }
     };
   }, [selectedLevelId]);
 
@@ -140,6 +124,23 @@ function WorldGame({
       }
       const submission = await submitLevelAnswer(challenge.id, answer);
       setResult(submission);
+      if (submission.correct && !submission.already_completed) {
+        const options = {
+          particleCount: 95,
+          spread: 78,
+          startVelocity: 48,
+          gravity: 0.9,
+          ticks: 180,
+          disableForReducedMotion: true,
+          colors: ["#6b55d9", "#ffbd59", "#ff7e84", "#61cda3", "#78b8fa"],
+        };
+        confetti({ ...options, origin: { x: 0.12, y: 0.68 } });
+        confetti({ ...options, origin: { x: 0.88, y: 0.68 } });
+        victoryConfettiTimeout.current = window.setTimeout(() => {
+          victoryConfettiTimeout.current = null;
+          confetti({ ...options, particleCount: 120, spread: 105, origin: { x: 0.5, y: 0.55 } });
+        }, 380);
+      }
       if (!submission.correct && challenge.challenge_type === "path_commands") {
         window.setTimeout(() => setAnimatedStep(0), 500);
       }
