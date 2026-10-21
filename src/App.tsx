@@ -299,7 +299,7 @@ function App() {
                   maxLength={32}
                   minLength={3}
                   name="username"
-                  pattern="[A-Za-z0-9_-]+"
+                  pattern="[A-Za-z0-9_\-]+"
                   placeholder="Por exemplo, Explorador7"
                   required
                   value={username}
