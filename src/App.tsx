@@ -9,6 +9,7 @@ import {
   type Player,
   type PlayerDashboard,
 } from "./api";
+import WorldGame from "./WorldGame";
 
 const worlds = [
   { number: "01", title: "Pensamento lógico", icon: "🧩", color: "peach" },
@@ -25,6 +26,7 @@ function App() {
   const [password, setPassword] = useState("");
   const [player, setPlayer] = useState<Player | null>(null);
   const [dashboard, setDashboard] = useState<PlayerDashboard | null>(null);
+  const [selectedWorldId, setSelectedWorldId] = useState<number | null>(null);
   const [dashboardError, setDashboardError] = useState("");
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
   const [authError, setAuthError] = useState("");
@@ -106,6 +108,7 @@ function App() {
   function handleLogout() {
     clearSession();
     setPlayer(null);
+    setSelectedWorldId(null);
     setPassword("");
     setAuthMode("login");
   }
@@ -145,7 +148,7 @@ function App() {
               Resolve desafios, ajuda personagens e descobre como a programação
               transforma ideias em coisas incríveis.
             </p>
-            <a className="primary-button" href="#auth">Explorar a aventura <span aria-hidden="true">→</span></a>
+            <a className="primary-button" href={player ? "#mundos" : "#auth"}>Explorar a aventura <span aria-hidden="true">→</span></a>
             <div className="hero-note"><span aria-hidden="true">🌱</span> Aprende ao teu ritmo, um desafio de cada vez.</div>
           </div>
           <div className="hero-art" aria-label="Ilustração de um pequeno robô explorador">
@@ -213,18 +216,41 @@ function App() {
             </div>
             <p>Cada mundo ensina uma nova forma de pensar.<br className="desktop-break" /> A aventura começa com lógica e cresce contigo.</p>
           </div>
-          <div className="world-grid">
-            {player && dashboard
-              ? dashboard.worlds.map((world) => <WorldCard key={world.id} world={world} />)
-              : worlds.map((world) => (
-                <article className={`world-card ${world.color}`} key={world.number}>
-                  <span className="world-number">MUNDO {world.number}</span>
-                  <span className="world-icon" aria-hidden="true">{world.icon}</span>
-                  <h3>{world.title}</h3>
-                  <span className="world-arrow" aria-hidden="true">↗</span>
-                </article>
-              ))}
-          </div>
+          {player && dashboard && selectedWorldId !== null
+            ? (
+              <WorldGame
+                key={selectedWorldId}
+                onBack={() => setSelectedWorldId(null)}
+                onProgressUpdated={async () => {
+                  const updatedDashboard = await getPlayerDashboard();
+                  setDashboard(updatedDashboard);
+                }}
+                world={dashboard.worlds.find((world) => world.id === selectedWorldId) ?? dashboard.worlds[0]}
+              />
+            )
+            : (
+              <>
+                {!player && <p className="map-sign-in-hint">Inicia sessão para entrares nos mundos e guardares o teu progresso.</p>}
+                <div className="world-grid">
+                  {player && dashboard
+                    ? dashboard.worlds.map((world) => (
+                      <WorldCard
+                        key={world.id}
+                        onEnter={() => setSelectedWorldId(world.id)}
+                        world={world}
+                      />
+                    ))
+                    : worlds.map((world) => (
+                      <article className={`world-card ${world.color}`} key={world.number}>
+                        <span className="world-number">MUNDO {world.number}</span>
+                        <span className="world-icon" aria-hidden="true">{world.icon}</span>
+                        <h3>{world.title}</h3>
+                        <a className="world-enter" href="#auth">Entrar <span aria-hidden="true">→</span></a>
+                      </article>
+                    ))}
+                </div>
+              </>
+            )}
         </section>
 
         <section className="auth-section" id="auth">
@@ -321,7 +347,7 @@ function App() {
   );
 }
 
-function WorldCard({ world }: { world: DashboardWorld }) {
+function WorldCard({ world, onEnter }: { world: DashboardWorld; onEnter: () => void }) {
   const firstLevel = world.levels[0];
   const statusLabel = {
     available: "Disponível",
@@ -344,6 +370,15 @@ function WorldCard({ world }: { world: DashboardWorld }) {
           {world.status === "available" && ` · ${firstLevel.title}`}
         </p>
       )}
+      <button
+        className="world-enter"
+        disabled={world.status === "locked"}
+        onClick={onEnter}
+        type="button"
+      >
+        {world.status === "locked" ? "Bloqueado" : world.status === "completed" ? "Rever mundo" : "Entrar"}
+        {world.status !== "locked" && <span aria-hidden="true">→</span>}
+      </button>
     </article>
   );
 }

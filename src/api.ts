@@ -8,6 +8,7 @@ export interface DashboardLevel {
   title: string;
   objective: string;
   xp_reward: number;
+  challenge_type: "sequence_choice" | "path_commands" | "coming_soon";
   status: "available" | "locked" | "completed";
   stars: number | null;
 }
@@ -31,6 +32,50 @@ export interface PlayerDashboard {
   total_levels: number;
   progress_percentage: number;
   worlds: DashboardWorld[];
+}
+
+export type Direction = "up" | "down" | "left" | "right";
+
+export type LevelChallenge =
+  | {
+      id: number;
+      world_id: number;
+      world_title: string;
+      title: string;
+      objective: string;
+      xp_reward: number;
+      challenge_type: "sequence_choice";
+      challenge: { pattern: string[]; choices: string[] };
+      completed: boolean;
+      stars: number | null;
+    }
+  | {
+      id: number;
+      world_id: number;
+      world_title: string;
+      title: string;
+      objective: string;
+      xp_reward: number;
+      challenge_type: "path_commands";
+      challenge: {
+        rows: number;
+        columns: number;
+        start: [number, number];
+        goal: [number, number];
+        walls: [number, number][];
+        max_commands: number;
+        optimal_commands: number;
+      };
+      completed: boolean;
+      stars: number | null;
+    };
+
+export interface LevelSubmissionResult {
+  correct: boolean;
+  already_completed: boolean;
+  stars: number | null;
+  xp_awarded: number;
+  message: string;
 }
 
 interface AuthResponse {
@@ -130,6 +175,27 @@ export async function getPlayerDashboard(): Promise<PlayerDashboard> {
     }
     throw error;
   }
+}
+
+export async function getLevelChallenge(levelId: number): Promise<LevelChallenge> {
+  const token = sessionStorage.getItem(tokenStorageKey);
+  if (!token) throw new Error("Inicia sessão para abrir este desafio.");
+  return request<LevelChallenge>(`/levels/${levelId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function submitLevelAnswer(
+  levelId: number,
+  answer: string | Direction[],
+): Promise<LevelSubmissionResult> {
+  const token = sessionStorage.getItem(tokenStorageKey);
+  if (!token) throw new Error("Inicia sessão para guardar o teu resultado.");
+  return request<LevelSubmissionResult>(`/levels/${levelId}/submit`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ answer }),
+  });
 }
 
 export function isUnauthorizedError(error: unknown): boolean {

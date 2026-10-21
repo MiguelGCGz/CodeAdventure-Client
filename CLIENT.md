@@ -73,4 +73,4 @@ npm run dev
 
 Copiar `.env.example` para `.env.local` para configurar `VITE_API_BASE_URL` quando a API nao estiver em `http://localhost:8000/api/v1`. O token de sessao fica guardado apenas no `sessionStorage` do separador e e removido ao terminar sessao ou quando a API indicar que expirou.
 
-`npm run build` valida os tipos TypeScript e cria a versao de producao. Registo, login, consulta de sessao e resumo de progresso usam os endpoints documentados em `SERVER.md`. O mapa de mundos apresenta os desbloqueios e resultados guardados; a interacao de jogo e a submissao de resultados serao implementadas nas etapas seguintes.
+`npm run build` valida os tipos TypeScript e cria a versao de producao. Registo, login, consulta de sessao, resumo de progresso e desafios dos dois primeiros mundos usam os endpoints documentados em `SERVER.md`. Cada mundo tem um botao de entrada; os mundos seguintes ficam assinalados como "em breve" ate os respetivos desafios serem implementados.
