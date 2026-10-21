@@ -163,7 +163,11 @@ h2 { margin-bottom: 0; font-size: clamp(29px, 3.2vw, 39px); letter-spacing: -.7p
 .maze-cell.visited:not(.wall) { border-color: #d9d0ff; background: #f1edff; }
 .maze-explorer { position: absolute; z-index: 2; display: grid; place-items: center; font-size: clamp(20px, 7vw, 35px); pointer-events: none; transition: left 320ms cubic-bezier(.2,.8,.3,1), top 320ms cubic-bezier(.2,.8,.3,1); }
 .maze-explorer.moving { animation: explorer-bounce 320ms ease-in-out infinite alternate; }
+.maze-explorer.crashed { animation: explorer-crash .48s ease-in-out; }
+.collision-burst { position: absolute; top: -55%; right: -35%; font-size: 24px; animation: collision-pop .55s ease-out both; }
 @keyframes explorer-bounce { from { transform: translateY(1px) rotate(-4deg); } to { transform: translateY(-4px) rotate(4deg); } }
+@keyframes explorer-crash { 0%, 100% { transform: translateX(0) rotate(0); } 20% { transform: translateX(-5px) rotate(-14deg); } 45% { transform: translateX(5px) rotate(14deg); } 70% { transform: translateX(-3px) rotate(-8deg); } }
+@keyframes collision-pop { from { opacity: 0; transform: scale(.3) rotate(-30deg); } 55% { opacity: 1; transform: scale(1.35) rotate(12deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
 .command-count { margin: 0 0 12px; color: var(--muted); font-size: 11px; text-align: center; }
 .direction-pad { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .direction-pad button { min-height: 47px; border: 1px solid #e5e1ef; border-radius: 11px; background: #fff; color: var(--purple); font: 700 18px system-ui, sans-serif; cursor: pointer; }
@@ -306,5 +310,5 @@ footer p { margin: 0; color: #89889b; font-size: 11px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
-  .maze-explorer.moving, .victory-badge, .victory-rocket, .victory-star, .victory-result { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .maze-explorer.moving, .maze-explorer.crashed, .collision-burst, .victory-badge, .victory-rocket, .victory-star, .victory-result { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }

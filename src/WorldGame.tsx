@@ -72,6 +72,7 @@ function WorldGame({
   const [commands, setCommands] = useState<Direction[]>([]);
   const [animatedStep, setAnimatedStep] = useState<number | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [hitObstacle, setHitObstacle] = useState(false);
   const [result, setResult] = useState<LevelSubmissionResult | null>(null);
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,6 +88,7 @@ function WorldGame({
     setChoice("");
     setCommands([]);
     setAnimatedStep(null);
+    setHitObstacle(false);
     getLevelChallenge(selectedLevelId)
       .then((levelChallenge) => {
         if (active) setChallenge(levelChallenge);
@@ -112,19 +114,31 @@ function WorldGame({
     setIsAnimating(challenge.challenge_type === "path_commands");
     setSubmitError("");
     setResult(null);
+    setHitObstacle(false);
     try {
       if (challenge.challenge_type === "path_commands" && Array.isArray(answer)) {
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         const stepDuration = reducedMotion ? 90 : 360;
+        const pathChallenge = challenge.challenge;
+        const pathPositions = getPathPositions(pathChallenge, answer);
+        const walls = new Set(pathChallenge.walls.map(([row, column]) => `${row},${column}`));
         setAnimatedStep(0);
         for (let step = 1; step <= answer.length; step += 1) {
           await new Promise((resolve) => window.setTimeout(resolve, stepDuration));
+          const [row, column] = pathPositions[step];
+          const isOutside = row < 0 || row >= pathChallenge.rows || column < 0 || column >= pathChallenge.columns;
+          const hitsStone = walls.has(`${row},${column}`);
+          if (isOutside || hitsStone) {
+            setAnimatedStep(isOutside ? step - 1 : step);
+            setHitObstacle(true);
+            break;
+          }
           setAnimatedStep(step);
         }
       }
       const submission = await submitLevelAnswer(challenge.id, answer);
       setResult(submission);
-      if (submission.correct && !submission.already_completed) {
+      if (submission.correct) {
         const options = {
           particleCount: 95,
           spread: 78,
@@ -140,9 +154,6 @@ function WorldGame({
           victoryConfettiTimeout.current = null;
           confetti({ ...options, particleCount: 120, spread: 105, origin: { x: 0.5, y: 0.55 } });
         }, 380);
-      }
-      if (!submission.correct && challenge.challenge_type === "path_commands") {
-        window.setTimeout(() => setAnimatedStep(0), 500);
       }
       if (submission.correct && !submission.already_completed) {
         await onProgressUpdated();
@@ -161,6 +172,7 @@ function WorldGame({
     setCommands((current) => [...current, command]);
     setResult(null);
     setSubmitError("");
+    setHitObstacle(false);
   }
 
   function renderChallenge() {
@@ -204,6 +216,9 @@ function WorldGame({
     }
 
     const pathPositions = getPathPositions(challenge.challenge, commands);
+    const displayedPath = hitObstacle && animatedStep !== null
+      ? pathPositions.slice(0, animatedStep + 1)
+      : pathPositions;
     const [robotRow, robotColumn] = pathPositions[
       animatedStep === null ? 0 : Math.min(animatedStep, pathPositions.length - 1)
     ];
@@ -225,7 +240,7 @@ function WorldGame({
             const isStart = position[0] === challenge.challenge.start[0] && position[1] === challenge.challenge.start[1];
             const isGoal = position[0] === challenge.challenge.goal[0] && position[1] === challenge.challenge.goal[1];
             const isWall = challenge.challenge.walls.some(([row, column]) => row === position[0] && column === position[1]);
-            const pathIndex = pathPositions.findIndex(([row, column]) => row === position[0] && column === position[1]);
+            const pathIndex = displayedPath.findIndex(([row, column]) => row === position[0] && column === position[1]);
             return (
               <span
                 className={`maze-cell ${isWall ? "wall" : ""} ${pathIndex >= 0 ? "visited" : ""}`}
@@ -237,7 +252,7 @@ function WorldGame({
           })}
           <span
             aria-label="Explorador"
-            className={`maze-explorer ${isAnimating ? "moving" : ""}`}
+            className={`maze-explorer ${isAnimating ? "moving" : ""} ${hitObstacle ? "crashed" : ""}`}
             role="img"
             style={{
               left: `${robotColumn * (100 / challenge.challenge.columns)}%`,
@@ -247,6 +262,7 @@ function WorldGame({
             }}
           >
             🤖
+            {hitObstacle && <span aria-hidden="true" className="collision-burst">💥</span>}
           </span>
         </div>
         <p className="command-count">Instruções: {commands.length}/{challenge.challenge.max_commands}</p>
@@ -276,7 +292,7 @@ function WorldGame({
           <button
             className="secondary-button"
             disabled={commands.length === 0 || isSubmitting}
-            onClick={() => { setCommands((current) => current.slice(0, -1)); setResult(null); }}
+            onClick={() => { setCommands((current) => current.slice(0, -1)); setResult(null); setHitObstacle(false); }}
             type="button"
           >
             Apagar último
@@ -284,7 +300,7 @@ function WorldGame({
           <button
             className="secondary-button"
             disabled={commands.length === 0 || isSubmitting}
-            onClick={() => { setCommands([]); setResult(null); setSubmitError(""); }}
+            onClick={() => { setCommands([]); setResult(null); setSubmitError(""); setHitObstacle(false); }}
             type="button"
           >
             Recomeçar
@@ -383,7 +399,11 @@ function WorldGame({
                   {result.correct && !result.already_completed && <VictoryEffect />}
                   <span aria-hidden="true" className="victory-badge">{result.correct ? "🏆" : "💡"}</span>
                   <strong>{result.correct ? "Missão cumprida!" : "Quase lá!"}</strong>
-                  <p>{result.message}</p>
+                  <p>
+                    {hitObstacle
+                      ? "Ups! O explorador bateu numa pedra. Ajusta as instruções e tenta outra vez!"
+                      : result.message}
+                  </p>
                   {result.correct && (
                     <>
                       <p className="victory-rewards">
