@@ -156,10 +156,13 @@ h2 { margin-bottom: 0; font-size: clamp(29px, 3.2vw, 39px); letter-spacing: -.7p
 .game-submit { justify-content: center; border: 0; font: inherit; cursor: pointer; }
 .game-submit:disabled { background: #d9d6e5; box-shadow: none; cursor: not-allowed; }
 .sequence-game > .game-submit { display: flex; margin: 22px auto 0; }
-.maze-grid { display: grid; width: min(100%, 340px); gap: 7px; margin: 20px auto; }
+.maze-grid { position: relative; display: grid; width: min(100%, 340px); gap: 7px; margin: 20px auto; }
 .maze-cell { display: grid; aspect-ratio: 1; place-items: center; border: 1px solid #e8e5ef; border-radius: 12px; background: #faf9fd; color: #635c89; font-size: 18px; font-weight: 700; }
 .maze-cell.wall { border-color: #e7e0d7; background: #eee7df; }
 .maze-cell.visited:not(.wall) { border-color: #d9d0ff; background: #f1edff; }
+.maze-explorer { position: absolute; z-index: 2; display: grid; place-items: center; font-size: clamp(20px, 7vw, 35px); pointer-events: none; transition: left 320ms cubic-bezier(.2,.8,.3,1), top 320ms cubic-bezier(.2,.8,.3,1); }
+.maze-explorer.moving { animation: explorer-bounce 320ms ease-in-out infinite alternate; }
+@keyframes explorer-bounce { from { transform: translateY(1px) rotate(-4deg); } to { transform: translateY(-4px) rotate(4deg); } }
 .command-count { margin: 0 0 12px; color: var(--muted); font-size: 11px; text-align: center; }
 .direction-pad { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .direction-pad button { min-height: 47px; border: 1px solid #e5e1ef; border-radius: 11px; background: #fff; color: var(--purple); font: 700 18px system-ui, sans-serif; cursor: pointer; }
@@ -177,6 +180,25 @@ h2 { margin-bottom: 0; font-size: clamp(29px, 3.2vw, 39px); letter-spacing: -.7p
 .game-result strong { font-size: 14px; }
 .game-result p { margin: 5px 0 0; font-size: 11px; line-height: 1.6; }
 .game-result p:last-child { font-weight: 700; }
+.victory-result { position: relative; overflow: hidden; padding: 27px 18px 24px; border: 1px solid #cceede; background: radial-gradient(ellipse at top, #fff 0%, #e8f8f0 64%); box-shadow: 0 10px 30px #55b88e22; animation: victory-pop .55s cubic-bezier(.2,.9,.25,1.25) both; }
+@keyframes victory-pop { from { opacity: 0; transform: scale(.86) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.victory-badge { display: block; margin: 0 auto 7px; font-size: 39px; animation: trophy-bounce .8s ease-in-out infinite alternate; }
+@keyframes trophy-bounce { from { transform: rotate(-8deg) translateY(0); } to { transform: rotate(8deg) translateY(-5px); } }
+.victory-result > strong { display: block; color: #226347; font: 700 22px "Trebuchet MS", system-ui, sans-serif; }
+.victory-result > p:not(.victory-rewards) { color: #42745d; font-size: 12px; }
+.victory-rewards { display: flex; justify-content: center; align-items: center; gap: 13px; margin-top: 12px !important; }
+.reward-stars { color: #e5a322; font-size: 23px; letter-spacing: 2px; text-shadow: 0 2px 0 #e5a32230; }
+.reward-xp { padding: 6px 10px; border-radius: 20px; background: #fff; color: #5145a0; font-size: 12px; }
+.victory-decoration { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.victory-rocket, .victory-star { position: absolute; display: block; font-size: 29px; animation: rocket-launch 1.7s ease-in both; }
+.rocket-left { bottom: -40px; left: 9%; }
+.rocket-right { right: 9%; bottom: -40px; animation-delay: .2s; }
+.victory-star { top: 19%; color: #f0ad35; font-size: 22px; animation: star-twinkle .75s ease-in-out infinite alternate; }
+.star-left { left: 24%; }
+.star-right { right: 24%; animation-delay: .2s; }
+@keyframes rocket-launch { 0% { opacity: 0; transform: translateY(0) rotate(-35deg); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-240px) rotate(-35deg); } }
+@keyframes star-twinkle { from { opacity: .45; transform: scale(.7) rotate(0); } to { opacity: 1; transform: scale(1.2) rotate(25deg); } }
+.next-world-button { position: relative; z-index: 1; justify-content: center; margin-top: 13px; }
 
 .dashboard-section { padding: 40px max(32px, calc((100% - 1160px) / 2)) 50px; background: #f2efff; }
 .dashboard-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
@@ -282,4 +304,5 @@ footer p { margin: 0; color: #89889b; font-size: 11px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+  .maze-explorer.moving, .victory-badge, .victory-rocket, .victory-star, .victory-result { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }

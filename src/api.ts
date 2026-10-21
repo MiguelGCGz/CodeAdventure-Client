@@ -68,6 +68,18 @@ export type LevelChallenge =
       };
       completed: boolean;
       stars: number | null;
+    }
+  | {
+      id: number;
+      world_id: number;
+      world_title: string;
+      title: string;
+      objective: string;
+      xp_reward: number;
+      challenge_type: "coming_soon";
+      challenge: Record<string, never>;
+      completed: boolean;
+      stars: number | null;
     };
 
 export interface LevelSubmissionResult {

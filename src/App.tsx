@@ -220,7 +220,11 @@ function App() {
             ? (
               <WorldGame
                 key={selectedWorldId}
+                nextWorld={dashboard.worlds.find(
+                  (world) => world.id > selectedWorldId && world.status !== "locked",
+                ) ?? null}
                 onBack={() => setSelectedWorldId(null)}
+                onNextWorld={(worldId) => setSelectedWorldId(worldId)}
                 onProgressUpdated={async () => {
                   const updatedDashboard = await getPlayerDashboard();
                   setDashboard(updatedDashboard);

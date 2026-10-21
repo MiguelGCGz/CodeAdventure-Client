@@ -1,3 +1,4 @@
+import confetti from "canvas-confetti";
 import { useEffect, useState } from "react";
 import {
   getLevelChallenge,
@@ -10,7 +11,9 @@ import {
 
 interface WorldGameProps {
   world: DashboardWorld;
+  nextWorld: DashboardWorld | null;
   onBack: () => void;
+  onNextWorld: (worldId: number) => void;
   onProgressUpdated: () => Promise<void>;
 }
 
@@ -43,13 +46,50 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Ocorreu um erro. Tenta novamente.";
 }
 
-function WorldGame({ world, onBack, onProgressUpdated }: WorldGameProps) {
+function VictoryEffect() {
+  useEffect(() => {
+    const options = {
+      particleCount: 95,
+      spread: 78,
+      startVelocity: 48,
+      gravity: 0.9,
+      ticks: 180,
+      disableForReducedMotion: true,
+      colors: ["#6b55d9", "#ffbd59", "#ff7e84", "#61cda3", "#78b8fa"],
+    };
+    confetti({ ...options, origin: { x: 0.12, y: 0.68 } });
+    confetti({ ...options, origin: { x: 0.88, y: 0.68 } });
+    const timeout = window.setTimeout(() => {
+      confetti({ ...options, particleCount: 120, spread: 105, origin: { x: 0.5, y: 0.55 } });
+    }, 380);
+    return () => window.clearTimeout(timeout);
+  }, []);
+
+  return (
+    <div aria-hidden="true" className="victory-decoration">
+      <span className="victory-rocket rocket-left">🚀</span>
+      <span className="victory-rocket rocket-right">🚀</span>
+      <span className="victory-star star-left">✦</span>
+      <span className="victory-star star-right">✦</span>
+    </div>
+  );
+}
+
+function WorldGame({
+  world,
+  nextWorld,
+  onBack,
+  onNextWorld,
+  onProgressUpdated,
+}: WorldGameProps) {
   const [selectedLevelId, setSelectedLevelId] = useState<number | null>(null);
   const [challenge, setChallenge] = useState<LevelChallenge | null>(null);
   const [challengeError, setChallengeError] = useState("");
   const [isLoadingChallenge, setIsLoadingChallenge] = useState(false);
   const [choice, setChoice] = useState("");
   const [commands, setCommands] = useState<Direction[]>([]);
+  const [animatedStep, setAnimatedStep] = useState<number | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [result, setResult] = useState<LevelSubmissionResult | null>(null);
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,6 +103,7 @@ function WorldGame({ world, onBack, onProgressUpdated }: WorldGameProps) {
     setResult(null);
     setChoice("");
     setCommands([]);
+    setAnimatedStep(null);
     getLevelChallenge(selectedLevelId)
       .then((levelChallenge) => {
         if (active) setChallenge(levelChallenge);
@@ -81,17 +122,31 @@ function WorldGame({ world, onBack, onProgressUpdated }: WorldGameProps) {
   async function checkAnswer(answer: string | Direction[]) {
     if (challenge === null) return;
     setIsSubmitting(true);
+    setIsAnimating(challenge.challenge_type === "path_commands");
     setSubmitError("");
     setResult(null);
     try {
+      if (challenge.challenge_type === "path_commands" && Array.isArray(answer)) {
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const stepDuration = reducedMotion ? 90 : 360;
+        setAnimatedStep(0);
+        for (let step = 1; step <= answer.length; step += 1) {
+          await new Promise((resolve) => window.setTimeout(resolve, stepDuration));
+          setAnimatedStep(step);
+        }
+      }
       const submission = await submitLevelAnswer(challenge.id, answer);
       setResult(submission);
+      if (!submission.correct && challenge.challenge_type === "path_commands") {
+        window.setTimeout(() => setAnimatedStep(0), 500);
+      }
       if (submission.correct && !submission.already_completed) {
         await onProgressUpdated();
       }
     } catch (error) {
       setSubmitError(errorMessage(error));
     } finally {
+      setIsAnimating(false);
       setIsSubmitting(false);
     }
   }
@@ -145,14 +200,17 @@ function WorldGame({ world, onBack, onProgressUpdated }: WorldGameProps) {
     }
 
     const pathPositions = getPathPositions(challenge.challenge, commands);
+    const [robotRow, robotColumn] = pathPositions[
+      animatedStep === null ? 0 : Math.min(animatedStep, pathPositions.length - 1)
+    ];
     return (
       <div className="path-game">
         <p className="game-prompt">Guia o explorador até à estrela sem tocar nas pedras.</p>
         <div
-          aria-label="Labirinto: robô no início e estrela no objetivo"
+          aria-label={`Labirinto: robô na linha ${robotRow + 1}, coluna ${robotColumn + 1}`}
           className="maze-grid"
-          role="img"
           style={{ gridTemplateColumns: `repeat(${challenge.challenge.columns}, minmax(0, 1fr))` }}
+          role="group"
         >
           {Array.from({ length: challenge.challenge.rows * challenge.challenge.columns }, (_, index) => {
             const position: [number, number] = [
@@ -168,10 +226,23 @@ function WorldGame({ world, onBack, onProgressUpdated }: WorldGameProps) {
                 className={`maze-cell ${isWall ? "wall" : ""} ${pathIndex >= 0 ? "visited" : ""}`}
                 key={`${position[0]}-${position[1]}`}
               >
-                {isWall ? "🪨" : isStart ? "🤖" : isGoal ? "⭐" : pathIndex > 0 ? pathIndex : ""}
+                {isWall ? "🪨" : isGoal ? "⭐" : isStart ? "🏁" : pathIndex > 0 ? pathIndex : ""}
               </span>
             );
           })}
+          <span
+            aria-label="Explorador"
+            className={`maze-explorer ${isAnimating ? "moving" : ""}`}
+            role="img"
+            style={{
+              left: `${robotColumn * (100 / challenge.challenge.columns)}%`,
+              top: `${robotRow * (100 / challenge.challenge.rows)}%`,
+              width: `${100 / challenge.challenge.columns}%`,
+              height: `${100 / challenge.challenge.rows}%`,
+            }}
+          >
+            🤖
+          </span>
         </div>
         <p className="command-count">Instruções: {commands.length}/{challenge.challenge.max_commands}</p>
         <div className="direction-pad" aria-label="Adicionar instrução">
@@ -219,7 +290,7 @@ function WorldGame({ world, onBack, onProgressUpdated }: WorldGameProps) {
             onClick={() => void checkAnswer(commands)}
             type="button"
           >
-            {isSubmitting ? "A verificar..." : "Executar"}
+            {isAnimating ? "O explorador está a caminho..." : isSubmitting ? "A verificar..." : "Executar"}
           </button>
         </div>
       </div>
@@ -279,6 +350,15 @@ function WorldGame({ world, onBack, onProgressUpdated }: WorldGameProps) {
               </article>
             ))}
           </div>
+          {world.status === "completed" && nextWorld && (
+            <button
+              className="primary-button next-world-button"
+              onClick={() => onNextWorld(nextWorld.id)}
+              type="button"
+            >
+              Próximo mundo: {nextWorld.title} <span aria-hidden="true">→</span>
+            </button>
+          )}
         </>
       ) : (
         <div className="challenge-panel">
@@ -292,15 +372,30 @@ function WorldGame({ world, onBack, onProgressUpdated }: WorldGameProps) {
               {renderChallenge()}
               {submitError && <p className="dashboard-error" role="alert">{submitError}</p>}
               {result && (
-                <div className={`game-result ${result.correct ? "success" : "try-again"}`} role="status">
-                  <strong>{result.correct ? "🎉 Muito bem!" : "💡 Quase!"}</strong>
+                <div className={`game-result ${result.correct ? "success victory-result" : "try-again"}`} role="status">
+                  {result.correct && !result.already_completed && <VictoryEffect />}
+                  <span aria-hidden="true" className="victory-badge">{result.correct ? "🏆" : "💡"}</span>
+                  <strong>{result.correct ? "Missão cumprida!" : "Quase lá!"}</strong>
                   <p>{result.message}</p>
                   {result.correct && (
-                    <p>
-                      {"★".repeat(result.stars ?? 0)}
-                      {result.xp_awarded > 0 && ` · +${result.xp_awarded} XP`}
-                      {result.already_completed && " · Resultado já guardado"}
-                    </p>
+                    <>
+                      <p className="victory-rewards">
+                        <span className="reward-stars" aria-label={`${result.stars} estrelas`}>
+                          {"★".repeat(result.stars ?? 0)}
+                        </span>
+                        {result.xp_awarded > 0 && <span className="reward-xp">+{result.xp_awarded} XP</span>}
+                        {result.already_completed && " · Resultado já guardado"}
+                      </p>
+                      {world.status === "completed" && nextWorld && (
+                        <button
+                          className="primary-button next-world-button"
+                          onClick={() => onNextWorld(nextWorld.id)}
+                          type="button"
+                        >
+                          Próximo mundo: {nextWorld.title} <span aria-hidden="true">→</span>
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               )}
